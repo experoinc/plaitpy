@@ -20,5 +20,7 @@ setup(
     license='MIT',
     description='a fake data generator',
     long_description=open('README.md').read(),
-    install_requires=[ ],
+    install_requires=[
+        "pyyaml"
+    ],
     )
