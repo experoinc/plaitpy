@@ -1,5 +1,10 @@
 from distutils.core import setup
-from src import VERSION
+import re, io
+
+VERSION = re.search(
+    r'VERSION\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
+    io.open('src/version.py', encoding='utf_8_sig').read()
+).group(1)
 
 setup(
     name='plaitpy',
