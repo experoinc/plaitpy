@@ -90,7 +90,7 @@ class RecordWrapper(dict):
         if field in self:
             return
 
-        push_this_record(self, self.__template.prev_record)
+        push_this_record(self, self.__template.prev_record, self.__template.num_records - self.__template.total_dropped)
 
         # get our val for the current field
         val = self.__template.field_data[field]
@@ -359,7 +359,7 @@ class Template(object):
             if choice in doc:
                 print_lambda = make_func(doc[choice], "<printer:%s>" % (self.name))
                 def print_func(r):
-                    push_this_record(r, None)
+                    push_this_record(r, None, 0)
                     print_lambda()
                     pop_this_record()
                 self.output_func = print_func
@@ -738,7 +738,7 @@ class Template(object):
                     arg_data[arg] = func()
 
 
-                push_this_record(template.record, template.prev_record)
+                push_this_record(template.record, template.prev_record, template.num_records - template.total_dropped)
 
                 ret = template.gen_record(arg_data, scrub_record=False)
                 # copy children errors up

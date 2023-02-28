@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import sys
 import time
 import random
+import uuid
 import re
 import math
 import os
@@ -100,6 +101,20 @@ class GlobalAssigner(dict):
         if attr in RAND_GLOBALS:
             return RAND_GLOBALS[attr]
 
+
+def stable_id_int(key, seq):
+    seed = f"{key}:{seq}"
+    r = random.Random(seed)
+    r.randint(1, 2147483646)
+
+
+def stable_id_guid(key, seq):
+    seed = f"{key}:{seq}"
+    r = random.Random(seed)
+    random_uuid = uuid.UUID(int=r.getrandbits(128), version=4)
+    str(random_uuid)
+
+
 def setup_globals():
     if "__plaitpy__" in GLOBALS:
         return
@@ -111,6 +126,9 @@ def setup_globals():
     ga.re = re
     ga.GLOBALS = ga
     ga.globals = ga
+    ga.record_num = 0
+    ga.stable_id_int = lambda key="", seq=None: stable_id_int(key, seq if seq is not None else ga.record_num)
+    ga.stable_id_guid = lambda key="", seq=None: stable_id_guid(key, seq if seq is not None else ga.record_num)
 
     from . import tween
     ga.tween = tween
@@ -122,21 +140,25 @@ def setup_globals():
         RAND_GLOBALS[field] = getattr(random, field)
 
 THIS_STACK = []
-def push_this_record(this, prev):
-    THIS_STACK.append((GLOBALS.this, GLOBALS.prev))
+def push_this_record(this, prev, record_num):
+    THIS_STACK.append((GLOBALS.this, GLOBALS.prev, GLOBALS.record_num))
 
     # setup our globals
     GLOBALS.this = this
     GLOBALS.prev = prev
+    GLOBALS.record_num = record_num
     RAND_GLOBALS.this = this
     RAND_GLOBALS.prev = prev
+    RAND_GLOBALS.record_num = record_num
 
 def pop_this_record():
-    this, prev = THIS_STACK.pop()
+    this, prev, record_num = THIS_STACK.pop()
     GLOBALS.this = this
     GLOBALS.prev = prev
+    GLOBALS.record_num = record_num
     RAND_GLOBALS.this = this
     RAND_GLOBALS.prev = prev
+    RAND_GLOBALS.record_num = record_num
 
 PATHS = {}
 def add_path(*paths):
