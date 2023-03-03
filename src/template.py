@@ -283,7 +283,7 @@ class Template(object):
 
 
     def setup_template_from_data(self, template, data):
-        doc = yaml.load(data)
+        doc = yaml.load(data, yaml.FullLoader)
 
         YAML_CACHE[template] = doc
         return self.setup_template_from_yaml_doc(template, doc)
@@ -788,10 +788,10 @@ class Template(object):
             field_cast = None
             field_finalize = None
             if "cast" in field_data:
-                field_cast = eval(field_data["cast"])
+                field_cast = eval(field_data["cast"], GLOBALS)
 
             if "finalize" in field_data:
-                field_finalize = eval("lambda value: %s" % field_data["finalize"])
+                field_finalize = eval("lambda value: %s" % field_data["finalize"], GLOBALS)
 
             if "initial" in field_data:
                 init_data = field_data["initial"]
@@ -1072,6 +1072,9 @@ class Template(object):
                 continue
 
             if field in self.hidden:
+                continue
+
+            if scrub_record and field[0] == "_":
                 continue
 
             ret[field] = self.record[field]

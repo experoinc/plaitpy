@@ -102,19 +102,6 @@ class GlobalAssigner(dict):
             return RAND_GLOBALS[attr]
 
 
-def stable_id_int(key, seq):
-    seed = f"{key}:{seq}"
-    r = random.Random(seed)
-    r.randint(1, 2147483646)
-
-
-def stable_id_guid(key, seq):
-    seed = f"{key}:{seq}"
-    r = random.Random(seed)
-    random_uuid = uuid.UUID(int=r.getrandbits(128), version=4)
-    str(random_uuid)
-
-
 def setup_globals():
     if "__plaitpy__" in GLOBALS:
         return
@@ -127,8 +114,6 @@ def setup_globals():
     ga.GLOBALS = ga
     ga.globals = ga
     ga.record_num = 0
-    ga.stable_id_int = lambda key="", seq=None: stable_id_int(key, seq if seq is not None else ga.record_num)
-    ga.stable_id_guid = lambda key="", seq=None: stable_id_guid(key, seq if seq is not None else ga.record_num)
 
     from . import tween
     ga.tween = tween
