@@ -787,6 +787,7 @@ class Template(object):
             # setup any type casts
             field_cast = None
             field_finalize = None
+            seed = field_data.get("seed", None)
             if "cast" in field_data:
                 field_cast = eval(field_data["cast"], GLOBALS)
 
@@ -856,6 +857,9 @@ class Template(object):
                 if onlyif and not onlyif():
                     return
 
+                randomstate = None
+                if seed is not None:
+                    randomstate = random.getstate()
 
                 try:
                     val = val_func()
@@ -881,6 +885,9 @@ class Template(object):
 
                 if type(val) == str:
                     val = fakerb.decode(val)
+
+                if seed is not None:
+                    random.setstate(randomstate)
 
                 return val
 
