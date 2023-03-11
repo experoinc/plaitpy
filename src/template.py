@@ -787,7 +787,11 @@ class Template(object):
             # setup any type casts
             field_cast = None
             field_finalize = None
-            seed = field_data.get("seed", None)
+
+            seed_func = None
+            if "seed" in field_data:
+                seed_func = self.setup_field("%s:seed" % field, field_data["seed"])
+
             if "cast" in field_data:
                 field_cast = eval(field_data["cast"], GLOBALS)
 
@@ -840,56 +844,56 @@ class Template(object):
                 val_func = self.setup_switch_field(field, **field_data)
             elif "effect" in field_data:
                 val_func = self.setup_effect_field(field, **field_data)
-            elif "onlyif" in field_data:
-                val_func = self.setup_fixed_field(field, value="true")
             elif "mixture" in field_data:
                 val_func = self.setup_mixture_field(field, **field_data)
+            elif "onlyif" in field_data:
+                val_func = self.setup_fixed_field(field, value="true")
             else:
                 self.error("UNRECOGNIZED FIELD", field, field_data)
                 exit_error()
-
 
             def ret_func():
                 if deps:
                     for sub in deps:
                         self.record.populate_field(sub)
 
-                if onlyif and not onlyif():
-                    return
-
                 randomstate = None
-                if seed is not None:
+                if seed_func is not None:
                     randomstate = random.getstate()
+                    random.seed(seed_func())
 
                 try:
-                    val = val_func()
-                    if field_cast:
-                        val = field_cast(val)
+                    if onlyif and not onlyif():
+                        return
 
-                    if field_finalize:
-                        val = field_finalize(val)
+                    try:
+                        val = val_func()
                         if field_cast:
                             val = field_cast(val)
-                except Exception as e:
-                    self.track_error(field, e)
-                    if DROP_BAD_RECORDS:
-                        self.record_invalid = True
 
-                    return
+                        if field_finalize:
+                            val = field_finalize(val)
+                            if field_cast:
+                                val = field_cast(val)
+                    except Exception as e:
+                        self.track_error(field, e)
+                        if DROP_BAD_RECORDS:
+                            self.record_invalid = True
 
+                        return
 
-                if field_replace and val:
-                    for r in field_replace:
-                        v = field_replace[r]
-                        val = val.replace(r, v)
+                    if field_replace and val:
+                        for r in field_replace:
+                            v = field_replace[r]
+                            val = val.replace(r, v)
 
-                if type(val) == str:
-                    val = fakerb.decode(val)
+                    if type(val) == str:
+                        val = fakerb.decode(val)
 
-                if seed is not None:
-                    random.setstate(randomstate)
-
-                return val
+                    return val
+                finally:
+                    if randomstate is not None:
+                        random.setstate(randomstate)
 
         elif type(field_data) in [ str, float, int ]:
             rf = self.setup_fixed_field(field, value=field_data)
