@@ -419,6 +419,7 @@ class Template(object):
             # but we have a problem because our statics were not properly
             # over-riding the sub-template statics
             self.field_data.update(template.field_data)
+            self.field_definitions.update(template.field_definitions)
 
             self.debug("*** MIXED", template.name, "INTO", self.name)
             self.mixins.append((mixin, ef))
